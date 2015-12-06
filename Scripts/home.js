@@ -13,12 +13,12 @@ com.searchdemo.manager = function(){
 	/** PRIVATE METHODS -----------------------------------------------------------------------------------------------------**/
 	
 	// This is called with the results from from FB.getLoginStatus().
-	var statusChangeCallback = function(response) {
+	var statusChangeCallback = function(response, shouldDownloadDetails) {
 		// The response object is returned with a status field that lets the
 		// app know the current login status of the person.
 		if (response.status === 'connected') {
 		  // Logged into your app and Facebook.
-		  showUserDetails();
+		  showUserDetails(shouldDownloadDetails);
 		} 
 		else{
 			$("#user-name").text("Guest");
@@ -27,33 +27,36 @@ com.searchdemo.manager = function(){
 	
 	// This function is called when someone finishes with the Login
 	// Button.
-	var checkLoginState = function() {
+	var checkLoginState = function(shouldDownloadDetails) {
 		FB.getLoginStatus(function(response) {
-			statusChangeCallback(response);
+			statusChangeCallback(response, shouldDownloadDetails);
 		});
 	}
 	
 	// Here we run a very simple test of the Graph API after login is
 	// successful.  See statusChangeCallback() for when this call is made.
-	var showUserDetails = function() {
+	var showUserDetails = function(shouldDownloadDetails) {
 		FB.api('/me?fields=email,id,name,first_name,last_name,picture', function(response) {
 			$("#user-name").text(response.first_name);
 
-			//Download user details json file
-			var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(response));
-			var dlAnchorElem = document.getElementById('downloadAnchorElem');
-			dlAnchorElem.setAttribute("href",     dataStr     );
-			dlAnchorElem.setAttribute("download", "facebook.json");
-			dlAnchorElem.click();
+			if(shouldDownloadDetails)
+			{
+				//Download user details json file
+				var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(response));
+				var dlAnchorElem = document.getElementById('downloadAnchorElem');
+				dlAnchorElem.setAttribute("href",     dataStr     );
+				dlAnchorElem.setAttribute("download", "facebook.json");
+				dlAnchorElem.click();
+			}
 		});
 	}
 	
 	var login_event = function(response) {
-	  checkLoginState();
+	  checkLoginState(true);
 	}
 
 	var logout_event = function(response) {
-	  checkLoginState();
+	  checkLoginState(false);
 	}
 	
 	/** INITIALIZE PLUGIN ---------------------------------------------------------------------------------------------------**/
@@ -67,7 +70,7 @@ com.searchdemo.manager = function(){
 		});
 
 		FB.getLoginStatus(function(response) {
-			statusChangeCallback(response);
+			statusChangeCallback(response, false);
 		});
 		
 		FB.Event.subscribe('auth.login', login_event);
